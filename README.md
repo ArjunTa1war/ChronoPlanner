@@ -31,6 +31,10 @@ Event Page :-
 <img width="1401" alt="Screenshot 2023-10-02 at 2 30 25 AM" src="https://github.com/ArjunTa1war/Time-Blocks/assets/79759270/b2c0e092-3848-43b5-bbc6-3ea58e8024eb">
 
 
+Mobile Friendly :-
+<img width="558" alt="Screenshot 2023-10-02 at 2 49 22 AM" src="https://github.com/ArjunTa1war/Time-Blocks/assets/79759270/ef1d7c7c-ff16-4851-8203-12d3e1df57de">
+
+
 
 
 
