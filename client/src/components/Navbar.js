@@ -1,21 +1,19 @@
 import React from 'react'
 import {Link} from "react-router-dom"
 import {useNavigate} from 'react-router-dom';
-import suprsend from "@suprsend/web-sdk";
 
 export default function Navbar(props) {
   let navigate = useNavigate();
     const handlelogout = ()=>{
       localStorage.removeItem('token');
       props.showAlert("Succesfully Logged Out","success");
-      suprsend.reset();
       navigate("/login");
     }
   return (
     <div>
-         <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{minHeight:"10px"}}>
+         <nav className="navbar navbar-expand-lg navbar-dark fixed-top" style={{backgroundColor:"#00203FFF"}}>
             <div className="container-fluid">
-                <Link className="navbar-brand" to="/">📅  Doodle Calender</Link>
+                <Link className="navbar-brand" to="/"><h4>📅 Time Blocks</h4></Link>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span className="navbar-toggler-icon"></span>
                 </button>

@@ -6,54 +6,60 @@ var fetchuser = require("./middleware/fetchUser")
 const app  = express();
 const port = 4000;
 const User = require("./models/user")
+const bcrypt = require("bcryptjs")
 const Events = require("./models/event")
 var jwt = require("jsonwebtoken")
 const JWT_SECRET = process.env.JWT_SECRET
 const cors = require('cors');
-const { Suprsend} = require("@suprsend/node-sdk");
-const { Event } = require("@suprsend/node-sdk");
-const supr_client = new Suprsend(process.env.WKEY, process.env.WSECRET);
-//middleware if we want to read the json and req file
+
 app.use(cors());
 app.use(express.json());
 
-/*******************************add to database and register on suprsend************************/
+
+/******************************* add to database *********************************************/
 
 app.post("/register",async(req,res)=>{
-    let success = false;
-    const user = await User.create({
-        email : req.body.email,
-        name : req.body.name,
-        phone : req.body.countryCode+req.body.phone,
-        password : req.body.password
-    })
-    const data = {
-        user : {
-            id : user.id
+    try {
+        let user = await User.findOne({ email: req.body.email });
+        if (user) {return res.status(400).json({success,
+            error: "sorry but the user with the same email already exists",
+        });
+       }
+        const salt = await bcrypt.genSalt(10);
+        const secPass = await bcrypt.hash(req.body.password,salt);
+        user = await User.create({
+            email : req.body.email,
+            name : req.body.name,
+            password : secPass
+        })
+        const data = {
+            user : {
+                id : user.id
+            }
         }
+        const authtoken = jwt.sign(data,JWT_SECRET);
+        success = true;
+        res.json({success,authtoken});
+
+    } catch (error) {
+      res.status(500).send("some error occured");
     }
-    const authtoken = jwt.sign(data,JWT_SECRET);
-    success = true;
-    const distinct_id = user.email;
-    const user1 = supr_client.user.get_instance(distinct_id);
-    user1.add_email(user.email) 
-    user1.add_sms("+"+user.phone) 
-    user1.add_whatsapp("+"+user.phone)
-    const response = user1.save()
-    response.then((res) => console.log("response", res));
-    res.json({success,authtoken});
 })
 
 /*****************************login user *******************************************************/
 
 app.post("/login",async(req,res)=>{
-    const {email,password} = req.body;
     let success = false;
-    let user = await User.findOne({email : email});
-    if(!user){
-     return res.status(400).json({success,message : "user doesnot exists"})
+    try {
+     const {email,password} = req.body;
+     let user = await User.findOne({email : email});
+     if(!user){
+      return res.status(400).json({success,message : "user doesnot exists"})
     }
-    if(password!=user.password)return res.status(400).json({success,message:"password is wrong"})
+    const passwordCompare = await bcrypt.compare(password, user.password);
+    if (!passwordCompare) {
+      return res.status(400).json({ success, message: "Password is wrong" });
+    }
     const data = {
       user : {
          id : user.id
@@ -61,17 +67,16 @@ app.post("/login",async(req,res)=>{
     }
     const authtoken = jwt.sign(data,JWT_SECRET);
     success = true;
-    res.json({success,authtoken});
+    res.json({success,authtoken});  
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("some error occured");
+    }
  })
 
- app.get("/getdata",(req,res)=>{
-    res.send("hello");
- })
+/*****************************fetch all events *******************************************************/
 
-
- /*****************************fetch all events *******************************************************/
-
- app.get("/fetchallevents",fetchuser,async(req,res)=>{
+  app.get("/fetchallevents",fetchuser,async(req,res)=>{
     try {
       const events = await Events.find({ collaborators: { $elemMatch: { user: req.user.id } } })
       .sort({ updatedAt: -1 });
@@ -81,7 +86,6 @@ app.post("/login",async(req,res)=>{
     res.status(500).send("some error occured");
     }
 })
-
 
 /***************************** Add events *******************************************************/
 
@@ -128,65 +132,18 @@ app.delete("/deleteevent/:id",async (req, res) => {
 
 app.post('/shareevent', fetchuser, async (req, res) => {
   try {
-    const { share, eventid } = req.body;
-    const user2 = await User.findById(req.user.id);
-    const event1 = await Events.findById(eventid);
-
-    if (!event1) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-
-    const formattedDate = event1.start.toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-
-    const formattedTime = event1.start.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-
     let success = false;
-    let distinct_id = '';
-    let properties = {};
-
-    const user = await User.findOne({ email: share });
-
-    if (!user) {
-      distinct_id = share;
-      const user1 = supr_client.user.get_instance(distinct_id);
-      user1.add_email(share);
-      const response1 = await user1.save();
-      console.log('response', response1);
-
-      properties = {
-        recep: share,
-        owner: user2.name,
-        title: event1.title,
-        date: formattedDate,
-        time: formattedTime,
-      };
-    } else {
-      event1.collaborators.push({ user: user._id });
-      await event1.save();
-      distinct_id = user.email;
-
-      properties = {
-        recep: user.name,
-        owner: user2.name,
-        title: event1.title,
-        date: formattedDate,
-        time: formattedTime,
-      };
+    const { share, eventid } = req.body;
+    const event1 = await Events.findById(eventid);
+    if (!event1) {
+      return res.status(404).json({ success,error: 'Event not found' });
     }
-
-    const event_name = 'EVENTSHARED';
-    const event = new Event(distinct_id, event_name, properties);
-    const response = await supr_client.track_event(event);
-    console.log('response', response);
-
+    const user = await User.findOne({ email: share });
+    if(!user){
+        return res.status(400).json({success,message : "user doesnot exists"})
+    }
+    event1.collaborators.push({ user: user._id });
+    await event1.save();
     success = true;
     return res.json({ success, event1 });
   } catch (error) {
@@ -212,10 +169,13 @@ app.post("/editevent/:id",fetchuser,async(req,res)=>{
     return res.status(500).send("some error occurred");
   }
 });
+
+
  /**********************listening on port **************************************/
 
-app.listen(port,()=>{
+ app.listen(port,()=>{
     console.log("server started on port 4000");
 })
 
- 
+
+

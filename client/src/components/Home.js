@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import Modal from 'react-modal';
 import {createEventId} from './event-utils';
 import {useNavigate} from 'react-router-dom';
-import suprsend from "@suprsend/web-sdk";
+import Loader from './Loader';
 
 Modal.setAppElement('#root');
 
@@ -97,7 +97,6 @@ export default function Home(props) {
       "date":formattedDate,
       "time":formattedTime
       }
-      suprsend.track("EVENTCREATED", property);
     }
   };
 
@@ -152,8 +151,7 @@ export default function Home(props) {
       <div className='demo-app-sidebar'>
         <div className='demo-app-sidebar-section'>
           <div className="container3 my-3">
-            <a className="github" href="https://github.com/SuprSend-NotificationAPI/Suprsend-DoodleCalender"  target="_blank"></a>
-            <a className="suprsend" href="https://www.suprsend.com"  target="_blank"></a>
+            <a className="github" href="https://github.com/ArjunTa1war/Time-Blocks"  target="_blank"></a>
           </div>
         </div>
         <div className='demo-app-sidebar-section text-center'>
@@ -181,11 +179,11 @@ export default function Home(props) {
   const [newtitle,setnewtitle] = useState('');
 
   return (
-    <div className='demo-app'>
+    <div className='demo-app pt-5'>
       {renderSidebar()}
       <div className='demo-app-main'>
         {loading?
-         ( <div>Loading...</div>):
+         <Loader />:
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           headerToolbar={{
@@ -323,7 +321,6 @@ export default function Home(props) {
             });
             const json = await response.json();
             setnewtitle('');
-            window.location.reload();
           }}
         >
           Edit

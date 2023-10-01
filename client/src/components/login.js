@@ -1,5 +1,4 @@
 import React from 'react'
-import suprsend from "@suprsend/web-sdk";
 import {useNavigate} from 'react-router-dom';
 
 export default function Login(props) {
@@ -23,7 +22,6 @@ export default function Login(props) {
     // console.log(json);
     if(json.success){
       localStorage.setItem('token' , json.authtoken);
-      suprsend.identify(formData.email);
       props.showAlert("Succesfully Logged in","success");
       navigate("/");
     }
@@ -43,9 +41,9 @@ export default function Login(props) {
  }
 
   return (
-    <div>
-    <div className=' border border-dark text-center rounded' style={{maxWidth:"500px",margin : "100px auto", borderColor: "red"}}>
-      <h4 className=" text-primary fw-bold text-center bg-dark text-light p-3 rounded">Login Page</h4>
+    <div className='pt-5'>
+    <div className='border border-dark text-center rounded' style={{maxWidth:"500px",margin : "100px auto", borderColor: "red"}}>
+      <h4 className=" text-primary fw-bold text-center text-light p-3 rounded" style={{backgroundColor:"#00203FFF"}}>Login Page</h4>
       <form onSubmit={handleSubmit} className='mx-3'>
         <div className="mb-3 mt-4">
           <div>Enter Your Email</div>
@@ -69,7 +67,7 @@ export default function Login(props) {
             />
         </div>
 
-        <button type="submit" className="btn mb-5 btn-dark">Submit</button>
+        <button type="submit" className="btn mb-5 btn-dark" style={{backgroundColor:"#00203FFF"}}>Submit</button>
       </form>
     </div>
     </div>
